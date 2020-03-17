@@ -35,7 +35,7 @@ do_sample = False
 # number of nodes to sample
 sample = 500
 # generate directed or undirected graphs
-directed = True
+directed = False
 # verbosity of the program : {0,1,2}
 verbose = 1
 
@@ -65,9 +65,12 @@ def generate_graphs(n, prob, a, b, directed = False):
         else:
              G.append(nx.fast_gnp_random_graph(n, p, directed = directed))
         # assign random weights
-        for e in list(G[-1].edges) + list(G[-1].in_edges):
-            G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
-
+        if directed:
+            for e in list(G[-1].edges) + list(G[-1].in_edges):
+                G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
+        if not directed:
+            for e in list(G[-1].edges):
+                G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
     return G
 
 
@@ -90,7 +93,7 @@ def expand_influence(G, x, n, t, verbose = 0):
     start_time = time.time()
 
     # compute the activation set for the node of interest
-    X = [y for y in G.successors(x)] + [x]
+    X = [y for y in G.neighbors(x)] + [x]
     # initialize counter for the active nodes
     total = len(X)
     if verbose == 2: print("Starting nodes :", total)
@@ -112,7 +115,7 @@ def expand_influence(G, x, n, t, verbose = 0):
     while Q != []:
         # dequeue
         v = Q.pop(0)
-        for u in G.successors(v):
+        for u in G.neighbors(v):
             # pick the inactive neighbors
             if not state[u]:
                 # update the influence value
@@ -137,27 +140,27 @@ def expand_influence(G, x, n, t, verbose = 0):
 
 
 def saver(stats, data):
-    
+
     for key, val in stats.items():
         # sigle dataframe stores in data_{key}
-        val.to_csv("results/stats_{}.csv".format(str(key)), index = False)
+        val.to_csv("results/stats_und_{}.csv".format(str(key)), index = False)
 
-    with open("results/keys_stats.txt", "w") as f:
+    with open("results/keys_stats_und.txt", "w") as f:
         #saving keys to file
         f.write(str(list(stats.keys())))
 
     for key, val in data.items():
         # sigle dataframe stores in data_{key}
-        val[0].to_csv("results/data_metrics.csv", index = False)
-        val[1].to_csv("results/data_levels.csv", index = False)
+        val[0].to_csv("results/data_und_metrics.csv", index = False)
+        val[1].to_csv("results/data_und_levels.csv", index = False)
 
-    with open("results/keys_data.txt", "w") as f:
+    with open("results/keys_data_und.txt", "w") as f:
         #saving keys to file
         f.write(str(list(data.keys())))
 
 
 if __name__ == "__main__":
-    
+
     start_time = time.time()
 
     # list of networkx graphs
