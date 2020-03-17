@@ -9,8 +9,7 @@ n = |V| and a probability p of having an edge (i,j) varying in a given set. To
 each edge in E a random weight in [a,b) is associated.
 Then the FLTR metric is computed on all the nodes (if do_sample = F) or on a
 random sample of nodes (if do_sample = T, size of the sample = sample).
-The results are stored in a dictionary of DataFrames, then saved in the results
-folder as files.
+The results (full ouput and statistics) are saved in the results folder as files.
 
 A level of verbosity for the algorithm can be selected changing the variable
 'verbose'.
@@ -19,7 +18,6 @@ A level of verbosity for the algorithm can be selected changing the variable
 import numpy as np
 import pandas as pd
 import networkx as nx
-import csv
 import time
 import datetime
 
@@ -138,17 +136,29 @@ def expand_influence(G, x, n, t, verbose = 0):
     return  total, max(exp_level)
 
 
-def saver(dictex):
-    for key, val in dictex.items():
+def saver(stats, data):
+    
+    for key, val in stats.items():
         # sigle dataframe stores in data_{key}
-        val.to_csv("results/data_{}.csv".format(str(key)))
+        val.to_csv("results/stats_{}.csv".format(str(key)), index = False)
 
-    with open("results/keys.txt", "w") as f:
+    with open("results/keys_stats.txt", "w") as f:
         #saving keys to file
-        f.write(str(list(dictex.keys())))
+        f.write(str(list(stats.keys())))
+
+    for key, val in data.items():
+        # sigle dataframe stores in data_{key}
+        val[0].to_csv("results/data_metrics.csv", index = False)
+        val[1].to_csv("results/data_levels.csv", index = False)
+
+    with open("results/keys_data.txt", "w") as f:
+        #saving keys to file
+        f.write(str(list(data.keys())))
 
 
 if __name__ == "__main__":
+    
+    start_time = time.time()
 
     # list of networkx graphs
     G = generate_graphs(n, prob, a, b, directed)
@@ -156,12 +166,15 @@ if __name__ == "__main__":
     # info
     if verbose > 0: start_time = time.time()
 
-    # dict: { graph : [(avg FLTR , avg expantion level) for t in res] }
-    results = {}
+    # dict: { prob : [(avg FLTR , avg expantion level) for t in res] }
+    stats = {}
+    # dict: { prob : [FLTRs dataframe, levels dataframe] }
+    # dataframes : columns = resistance, rows = nodes (no correspondance with index)}
+    data = {}
 
     for i, graph in enumerate(G):
         # info
-        if verbose == 1: print("Graph #", i)
+        if verbose == 1: print("Graph p:", prob[i])
         # node selection
         if do_sample == True:
             # pick randomly some nodes
@@ -170,6 +183,8 @@ if __name__ == "__main__":
         # initialize the dict entry as DataFrame
         df = pd.DataFrame(columns = ['res','avg_FLTR','avg_exp_level'])
 
+        metrics = {}
+        levels = {}
         for t in res:
             # info
             if verbose == 2:
@@ -191,6 +206,8 @@ if __name__ == "__main__":
             # save results for (graph, t)
             df = df.append({'res': t, 'avg_FLTR': np.mean(temp_FLTR),
              'avg_exp_level': np.mean(temp_level)}, ignore_index = True)
+            metrics[t] = temp_FLTR
+            levels[t] = temp_level
             del temp_FLTR
             del temp_level
             # info
@@ -198,9 +215,12 @@ if __name__ == "__main__":
 
         # info
         if verbose == 1: print(df, end = "\n\n")
-        # save results in the dict
-        results[i] = df
+        # save results in the dicts
+        stats[prob[i]] = df
+        data[prob[i]] = [pd.DataFrame(metrics), pd.DataFrame(levels)]
         del df
+        del metrics
+        del levels
     # info
     if verbose > 0:
         end_time = time.time()
@@ -209,4 +229,4 @@ if __name__ == "__main__":
         print("Total uptime: ", human_uptime)
 
     # save results on a csv file
-    saver(results)
+    saver(stats, data)
