@@ -25,7 +25,7 @@ import datetime
 b = 1
 a = 0
 # resistance
-res = [1 , 0.75, 0.5, 0.25]
+res = [ 0.5, 0.4, 0.3, 0.2 ]
 # number of nodes
 n = 1000
 # probabilties
@@ -38,8 +38,6 @@ sample = 500
 directed = False
 # verbosity of the program : {0,1,2}
 verbose = 1
-
-
 
 def generate_graphs(n, prob, a, b, directed = False):
     '''
@@ -139,22 +137,26 @@ def expand_influence(G, x, n, t, verbose = 0):
     return  total, max(exp_level)
 
 
-def saver(stats, data):
+def saver(stats, data, directed):
+
+    # check the directed value
+    if directed == True: lab = ''
+    else: lab = '_und'
 
     for key, val in stats.items():
         # sigle dataframe stores in data_{key}
-        val.to_csv("results/stats_und_{}.csv".format(str(key)), index = False)
+        val.to_csv("results/stats{}_{}_refinement.csv".format(lab, str(key)), index = False)
 
-    with open("results/keys_stats_und.txt", "w") as f:
+    with open("results/keys_stats{}_refinement.txt".format(lab), "w") as f:
         #saving keys to file
         f.write(str(list(stats.keys())))
 
     for key, val in data.items():
         # sigle dataframe stores in data_{key}
-        val[0].to_csv("results/data_und_metrics.csv", index = False)
-        val[1].to_csv("results/data_und_levels.csv", index = False)
+        val[0].to_csv("results/data{}_metrics_refinement.csv".format(lab), index = False)
+        val[1].to_csv("results/data{}_levels_refinement.csv".format(lab), index = False)
 
-    with open("results/keys_data_und.txt", "w") as f:
+    with open("results/keys_data{}_refinement.txt".format(lab), "w") as f:
         #saving keys to file
         f.write(str(list(data.keys())))
 
@@ -232,4 +234,4 @@ if __name__ == "__main__":
         print("Total uptime: ", human_uptime)
 
     # save results on a csv file
-    saver(stats, data)
+    saver(stats, data, directed)
