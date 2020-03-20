@@ -29,13 +29,15 @@ res = [ 0.5, 0.4, 0.3, 0.2 ]
 # number of nodes
 n = 1000
 # probabilties
-prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999 ]
+prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(10*n), 1/(2*n) ]
 # compute FLTR on a sample or on all nodes
 do_sample = False
 # number of nodes to sample
 sample = 500
 # generate directed or undirected graphs
-directed = False
+directed = True
+# whether the running is a refinement or not
+refinement = True
 # verbosity of the program : {0,1,2}
 verbose = 1
 
@@ -137,26 +139,29 @@ def expand_influence(G, x, n, t, verbose = 0):
     return  total, max(exp_level)
 
 
-def saver(stats, data, directed):
+def saver(stats, data, directed, refinement):
 
     # check the directed value
-    if directed == True: lab = ''
+    if directed: lab = ''
     else: lab = '_und'
+
+    if refinement: ref = '_refinement'
+    else: ref = ''
 
     for key, val in stats.items():
         # sigle dataframe stores in data_{key}
-        val.to_csv("results/stats{}_{}_refinement.csv".format(lab, str(key)), index = False)
+        val.to_csv("results/stats{}_{}{}.csv".format(lab, str(key), ref), index = False)
 
-    with open("results/keys_stats{}_refinement.txt".format(lab), "w") as f:
+    with open("results/keys_stats{}{}.txt".format(lab, ref), "w") as f:
         #saving keys to file
         f.write(str(list(stats.keys())))
 
     for key, val in data.items():
         # sigle dataframe stores in data_{key}
-        val[0].to_csv("results/data{}_metrics_refinement.csv".format(lab), index = False)
-        val[1].to_csv("results/data{}_levels_refinement.csv".format(lab), index = False)
+        val[0].to_csv("results/data{}_metrics{}.csv".format(lab, ref), index = False)
+        val[1].to_csv("results/data{}_levels{}.csv".format(lab, ref), index = False)
 
-    with open("results/keys_data{}_refinement.txt".format(lab), "w") as f:
+    with open("results/keys_data{}{}.txt".format(lab, ref), "w") as f:
         #saving keys to file
         f.write(str(list(data.keys())))
 
@@ -178,8 +183,14 @@ if __name__ == "__main__":
     data = {}
 
     for i, graph in enumerate(G):
+
         # info
-        if verbose == 1: print("Graph p:", prob[i])
+        if verbose == 1:
+            print("Graph p:", prob[i])
+            # check the giant component size
+            if not directed:
+                print('connected components: \n', [len(c) for c in sorted(
+                nx.connected_components(graph), key=len, reverse=True)])
         # node selection
         if do_sample == True:
             # pick randomly some nodes
@@ -234,4 +245,4 @@ if __name__ == "__main__":
         print("Total uptime: ", human_uptime)
 
     # save results on a csv file
-    saver(stats, data, directed)
+    saver(stats, data, directed, refinement)
