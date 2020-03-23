@@ -9,7 +9,7 @@ n = |V| and a probability p of having an edge (i,j) varying in a given set. To
 each edge in E a random weight in [a,b) is associated.
 Then the FLTR metric is computed on all the nodes (if do_sample = F) or on a
 random sample of nodes (if do_sample = T, size of the sample = sample).
-The results (full ouput and statistics) are saved in the results folder as files.
+The results (full output and statistics) are saved in the results folder as files.
 
 A level of verbosity for the algorithm can be selected changing the variable
 'verbose'.
@@ -25,17 +25,18 @@ import datetime
 b = 1
 a = 0
 # resistance
-res = [ 0.5, 0.4, 0.3, 0.2 ]
+# res = [ 1, 0.75, 0.5, 0.25 ] # standard
+res = [ 0.5, 0.4, 0.3, 0.2 ] # refinement
 # number of nodes
 n = 1000
 # probabilties
-prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(10*n), 1/(2*n) ]
+prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*n), 1/(10*n) ]
 # compute FLTR on a sample or on all nodes
 do_sample = False
 # number of nodes to sample
 sample = 50
 # generate directed or undirected graphs
-directed = True
+directed = False
 # whether the running is a refinement or not
 refinement = True
 # verbosity of the program : {0,1,2}
@@ -80,7 +81,7 @@ def expand_influence(G, x, n, t, verbose = 0):
     This function computes the FLTR metric for the x node in the G graph.
 
     INPUT
-    G : networkx DiGraph, G = (V,E)
+    G : networkx Graph/DiGraph, G = (V,E)
     x : int, node of interest
     n : int, n = |V|
     t : float, resistance values (constant on nodes)
