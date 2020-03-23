@@ -33,7 +33,7 @@ prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(10*n), 1/(2*n) ]
 # compute FLTR on a sample or on all nodes
 do_sample = False
 # number of nodes to sample
-sample = 500
+sample = 50
 # generate directed or undirected graphs
 directed = True
 # whether the running is a refinement or not
@@ -149,7 +149,7 @@ def saver(stats, data, directed, refinement):
     else: ref = ''
 
     for key, val in stats.items():
-        # sigle dataframe stores in data_{key}
+        # sigle dataframe stores in stats_{key}
         val.to_csv("results/stats{}_{}{}.csv".format(lab, str(key), ref), index = False)
 
     with open("results/keys_stats{}{}.txt".format(lab, ref), "w") as f:
@@ -158,8 +158,8 @@ def saver(stats, data, directed, refinement):
 
     for key, val in data.items():
         # sigle dataframe stores in data_{key}
-        val[0].to_csv("results/data{}_metrics{}.csv".format(lab, ref), index = False)
-        val[1].to_csv("results/data{}_levels{}.csv".format(lab, ref), index = False)
+        val[0].to_csv("results/data{}_{}_metrics{}.csv".format(lab, str(key), ref), index = False)
+        val[1].to_csv("results/data{}_{}_levels{}.csv".format(lab,  str(key), ref), index = False)
 
     with open("results/keys_data{}{}.txt".format(lab, ref), "w") as f:
         #saving keys to file
@@ -207,8 +207,8 @@ if __name__ == "__main__":
                 print("#### Graph #{} with p = {} ant threshold = {} ####".format(
                 i, prob[i], t), end = "\n\n")
             # lists of partial result - one per (graph, t)
-            temp_FLTR = []
-            temp_level = []
+            metrics[t] = []
+            levels[t] = []
 
             for x in nodes:
                 # info
@@ -216,16 +216,18 @@ if __name__ == "__main__":
                 # compute expantion
                 FLTR, level = expand_influence(graph, x, n, t)
                 # save partial results
-                temp_FLTR.append(FLTR)
-                temp_level.append(level)
+                metrics[t].append(FLTR)
+                levels[t].append(level)
+                # info
+                if verbose == 2: print('FLTR: {}, level: {}'.format(FLTR, level))
 
             # save results for (graph, t)
-            df = df.append({'res': t, 'avg_FLTR': np.mean(temp_FLTR),
-             'avg_exp_level': np.mean(temp_level)}, ignore_index = True)
-            metrics[t] = temp_FLTR
-            levels[t] = temp_level
-            del temp_FLTR
-            del temp_level
+            stat_dict = {'res': t, 'avg_FLTR': np.mean(metrics[t]),
+             'avg_exp_level': np.mean(levels[t])}
+            # info
+            if verbose == 2:
+                print(stat_dict)
+            df = df.append(stat_dict, ignore_index = True)
             # info
             if verbose == 2: print("", end = "\n\n\n")
 
