@@ -32,15 +32,15 @@ a = 0
 res = [ 1, 0.75, 0.5, 0.4, 0.3, 0.2 ]
 # number of nodes (list)
 # N = list(range(10**3, 10**5 + 500, 500))
-N = [1000]
+N = [1000, 1500]
 # compute FLTR on a sample or on all nodes
-do_sample = False
+do_sample = True
 # number of nodes to sample
-sample = 50
+sample = 1000
 # generate directed or undirected graphs
-directed = False
+directed = True
 # verbosity of the program : {0,1,2}
-verbose = 1
+verbose = 0
 # whether to run in parallel
 parallel = True
 
@@ -238,11 +238,11 @@ def run_simulation(n):
         del metrics
         del levels
     # info
-    if verbose > 0:
-        end_time = time.time()
-        uptime = end_time - start_time
-        human_uptime = datetime.timedelta(seconds=uptime)
-        print("Total uptime: ", human_uptime)
+    print('Current size:', n)
+    end_time = time.time()
+    uptime = end_time - start_time
+    human_uptime = datetime.timedelta(seconds=uptime)
+    print("Total uptime: ", human_uptime)
 
     # save results on a csv file
     saver(stats, data, directed, n)
