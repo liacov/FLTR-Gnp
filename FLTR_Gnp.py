@@ -13,6 +13,8 @@ The results (full output and statistics) are saved in the results folder as file
 
 A level of verbosity for the algorithm can be selected changing the variable
 'verbose'.
+
+The 'parallel' variable decides whether to run or not the code in parallel.
 """
 
 import numpy as np
@@ -21,26 +23,26 @@ import networkx as nx
 import time
 import datetime
 
+from multiprocessing import Pool
+
 # weight interval
 b = 1
 a = 0
 # resistance
-# res = [ 1, 0.75, 0.5, 0.25 ] # standard
-res = [ 0.5, 0.4, 0.3, 0.2 ] # refinement
-# number of nodes
-n = 1000
-# probabilties
-prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*n), 1/(10*n) ]
+res = [ 1, 0.75, 0.5, 0.4, 0.3, 0.2 ]
+# number of nodes (list)
+# N = list(range(10**3, 10**5 + 500, 500))
+N = [1000]
 # compute FLTR on a sample or on all nodes
 do_sample = False
 # number of nodes to sample
 sample = 50
 # generate directed or undirected graphs
 directed = False
-# whether the running is a refinement or not
-refinement = True
 # verbosity of the program : {0,1,2}
 verbose = 1
+# whether to run in parallel
+parallel = True
 
 def generate_graphs(n, prob, a, b, directed = False):
     '''
@@ -73,7 +75,6 @@ def generate_graphs(n, prob, a, b, directed = False):
             for e in list(G[-1].edges):
                 G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
     return G
-
 
 
 def expand_influence(G, x, n, t, verbose = 0):
@@ -140,34 +141,30 @@ def expand_influence(G, x, n, t, verbose = 0):
     return  total, max(exp_level)
 
 
-def saver(stats, data, directed, refinement):
+def saver(stats, data, directed, n):
 
     # check the directed value
     if directed: lab = ''
     else: lab = '_und'
 
-    if refinement: ref = '_refinement'
-    else: ref = ''
-
     for key, val in stats.items():
         # sigle dataframe stores in stats_{key}
-        val.to_csv("results/stats{}_{}{}.csv".format(lab, str(key), ref), index = False)
+        val.to_csv("results/stats{}_{}_{}.csv".format(lab, str(n), str(key)), index = False)
 
-    with open("results/keys_stats{}{}.txt".format(lab, ref), "w") as f:
+    # keys : probabilities
+    with open("results/keys.txt", "w") as f:
         #saving keys to file
         f.write(str(list(stats.keys())))
 
     for key, val in data.items():
         # sigle dataframe stores in data_{key}
-        val[0].to_csv("results/data{}_{}_metrics{}.csv".format(lab, str(key), ref), index = False)
-        val[1].to_csv("results/data{}_{}_levels{}.csv".format(lab,  str(key), ref), index = False)
-
-    with open("results/keys_data{}{}.txt".format(lab, ref), "w") as f:
-        #saving keys to file
-        f.write(str(list(data.keys())))
+        val[0].to_csv("results/data{}_{}_{}_metrics.csv".format(lab, str(n), str(key)), index = False)
+        val[1].to_csv("results/data{}_{}_{}_levels.csv".format(lab, str(n), str(key)), index = False)
 
 
-if __name__ == "__main__":
+def run_simulation(n):
+    # Define probabilityassociated to the size
+    prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*n), 1/(10*n) ]
 
     start_time = time.time()
 
@@ -248,4 +245,25 @@ if __name__ == "__main__":
         print("Total uptime: ", human_uptime)
 
     # save results on a csv file
-    saver(stats, data, directed, refinement)
+    saver(stats, data, directed, n)
+
+def run_in_sequence():
+    # Run the expantion model for different graph sizes
+    for n in N:
+        run_simulation(n)
+    # save the explored values of n
+    np.save('results/sizes.npy', N)
+
+def run_in_parallel():
+    # Define the parallel processes
+    # 'processes' is the number of worker processes to use. If processes is None
+    # then the number returned by os.cpu_count() is used.
+    pool = Pool()
+    # Associate processes to args
+    pool.map(run_simulation, N)
+    # save the explored values of n
+    np.save('results/sizes.npy', N)
+
+if __name__ == "__main__":
+    if not parallel: run_in_sequence()
+    if parallel: run_in_parallel()
