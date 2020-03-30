@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
 """
 Created on Mon Mar 16 2020
 
 @author: Laura Iacovissi
 
-The following code generate an Erdos-Renyi random graph G(V,E) from a fixed value
-n = |V| and a probability p of having an edge (i,j) varying in a given set. To
-each edge in E a random weight in [a,b) is associated.
+The following code generate Erdos-Renyi random graphs G(V,E) from a list of
+n = |V| values and a list of probabilities prob of having an edge (i,j) varying
+in a given set. To each edge in E a random weight in [a,b) is associated.
 Then the FLTR metric is computed on all the nodes (if do_sample = F) or on a
 random sample of nodes (if do_sample = T, size of the sample = sample).
 The results (full output and statistics) are saved in the results folder as files.
 
+For the same couple of paramenters n,p a both a directed and an undirected G
+are generated (with different samplings).
+
 A level of verbosity for the algorithm can be selected changing the variable
 'verbose'.
-
-The 'parallel' variable decides whether to run or not the code in parallel.
 """
 
 import numpy as np
@@ -31,18 +31,13 @@ a = 0
 # resistance
 res = [ 1, 0.75, 0.5, 0.4, 0.3, 0.2 ]
 # number of nodes (list)
-# N = list(range(10**3 * 2, 10**5, 10**3 * 5))
-N = [1000]
+N = list(range(10**3 * 2, 10**5, 10**3 * 5))
 # compute FLTR on a sample or on all nodes
-do_sample = False
+do_sample = True
 # number of nodes to sample
 sample = 1000
-# generate directed or undirected graphs
-directed = False
 # verbosity of the program : {0,1,2}
 verbose = 0
-# whether to run in parallel
-parallel = True
 
 def generate_graphs(n, prob, a, b, directed = False):
     '''
@@ -92,7 +87,8 @@ def expand_influence(G, x, n, t, verbose = 0):
     total : int, FLTR(x)
     max(exp_level): int, maximum expantion level reached during the computation
     '''
-    start_time = time.time()
+
+    start_time_exp = time.time()
 
     # compute the activation set for the node of interest
     X = [y for y in G.neighbors(x)] + [x]
@@ -132,12 +128,12 @@ def expand_influence(G, x, n, t, verbose = 0):
                 # update expantion level
                 exp_level[u] = exp_level[v] + 1
 
-    end_time = time.time()
-    uptime = end_time - start_time
-    human_uptime = datetime.timedelta(seconds=uptime)
+    end_time_exp = time.time()
+    uptime_exp = end_time_exp - start_time_exp
+    human_uptime_exp = datetime.timedelta(seconds=uptime_exp)
     if verbose == 2:
         print("Uptime: {}, Active nodes: {}, Max expantion level: {}".format(
-        human_uptime, total, max(exp_level)))
+        human_uptime_exp, total, max(exp_level)))
     return  total, max(exp_level)
 
 
@@ -162,14 +158,12 @@ def saver(stats, data, directed, n):
         val[1].to_csv("results/data{}_{}_{}_levels.csv".format(lab, str(n), str(key)), index = False)
 
 
-def run_simulation(n):
-    # Define probability associated to the size
-    prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*n), 1/(10*n) ]
-
-    start_time = time.time()
-
+def run_simulation(n, prob, directed):
     # list of networkx graphs
     G = generate_graphs(n, prob, a, b, directed)
+
+    # info
+    start_time = time.time()
 
     # dict: { prob : [(avg FLTR , avg expantion level) for t in res] }
     stats = {}
@@ -235,32 +229,34 @@ def run_simulation(n):
         del metrics
         del levels
     # info
-    print('Current size:', n)
     end_time = time.time()
     uptime = end_time - start_time
     human_uptime = datetime.timedelta(seconds=uptime)
-    print("Total uptime: ", human_uptime)
+    print("Size: {} \n Total uptime: {} \n".format(N, human_uptime))
 
     # save results on a csv file
     saver(stats, data, directed, n)
 
-def run_in_sequence():
-    # Run the expantion model for different graph sizes
-    for n in N:
-        run_simulation(n)
-    # save the explored values of n
-    np.save('results/sizes.npy', N)
 
 def run_in_parallel():
+    args = []
+    for n in N:
+        # Define probability associated to the size
+        prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*n), 1/(10*n) ]
+        # update list of args
+        args.append((n, prob, True))
+        args.append((n, prob, False))
+
     # Define the parallel processes
     # 'processes' is the number of worker processes to use. If processes is None
     # then the number returned by os.cpu_count() is used.
     pool = Pool()
     # Associate processes to args
-    pool.map(run_simulation, N)
+    pool.starmap(run_simulation, args)
+
     # save the explored values of n
     np.save('results/sizes.npy', N)
 
+
 if __name__ == "__main__":
-    if not parallel: run_in_sequence()
-    if parallel: run_in_parallel()
+    run_in_parallel()
