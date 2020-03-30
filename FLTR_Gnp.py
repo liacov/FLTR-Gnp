@@ -31,14 +31,14 @@ a = 0
 # resistance
 res = [ 1, 0.75, 0.5, 0.4, 0.3, 0.2 ]
 # number of nodes (list)
-# N = list(range(10**3, 10**5 + 500, 500))
-N = [1000, 1500]
+# N = list(range(10**3 * 2, 10**5, 10**3 * 5))
+N = [1000]
 # compute FLTR on a sample or on all nodes
-do_sample = True
+do_sample = False
 # number of nodes to sample
 sample = 1000
 # generate directed or undirected graphs
-directed = True
+directed = False
 # verbosity of the program : {0,1,2}
 verbose = 0
 # whether to run in parallel
