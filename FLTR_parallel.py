@@ -28,18 +28,21 @@ from multiprocessing import Pool
 # weight interval
 b = 1
 a = 0
+# wheter or not assign weights
+weighted = False
 # resistance
 res = [ 1, 0.75, 0.5, 0.4, 0.3, 0.2 ]
 # number of nodes (list)
-N = list(range(10**3 * 2, 10**5, 10**3 * 5))
+# N = list(range(10**3 * 2, 10**5, 10**3 * 5))
+N = [1000]
 # compute FLTR on a sample or on all nodes
-do_sample = True
+do_sample = False
 # number of nodes to sample
 sample = 1000
 # verbosity of the program : {0,1,2}
 verbose = 0
 
-def generate_graphs(n, prob, a, b, directed = False):
+def generate_graphs(n, prob, directed):
     '''
     This function generates Erdos-Renyi weighted random graphs/digraphs of the
     same size (# nodes) with different probabilities to have an edge among two
@@ -63,16 +66,17 @@ def generate_graphs(n, prob, a, b, directed = False):
         else:
              G.append(nx.fast_gnp_random_graph(n, p, directed = directed))
         # assign random weights
-        if directed:
-            for e in list(G[-1].edges) + list(G[-1].in_edges):
-                G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
-        if not directed:
-            for e in list(G[-1].edges):
-                G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
+        if weighted:
+            if directed:
+                for e in list(G[-1].edges) + list(G[-1].in_edges):
+                    G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
+            if not directed:
+                for e in list(G[-1].edges):
+                    G[-1][e[0]][e[1]]['weight'] = (b - a) * np.random.random_sample() + a
     return G
 
 
-def expand_influence(G, x, n, t, verbose = 0):
+def expand_influence(G, x, n, t, directed, verbose = 0):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
@@ -90,8 +94,12 @@ def expand_influence(G, x, n, t, verbose = 0):
 
     start_time_exp = time.time()
 
+    if not weighted:
+        # convert the percentage in a number
+        T = t * n
     # compute the activation set for the node of interest
-    X = [y for y in G.neighbors(x)] + [x]
+    if directed: X = [y for y in G.predecessors(x)] + [x]
+    else: X = [y for y in G.neighbors(x)] + [x]
     # initialize counter for the active nodes
     total = len(X)
     if verbose == 2: print("Starting nodes :", total)
@@ -113,12 +121,16 @@ def expand_influence(G, x, n, t, verbose = 0):
     while Q != []:
         # dequeue
         v = Q.pop(0)
+        if directed: neigh = G.predecessors(v)
+        else: neigh = G.neighbors(v)
         for u in G.neighbors(v):
             # pick the inactive neighbors
             if not state[u]:
                 # update the influence value
-                influence[u] += G[v][u]['weight']
-                if influence[u] > t:
+                if weighted:
+                    influence[u] += G[v][u]['weight']
+                else: influence[u] += 1
+                if influence[u] > T:
                     # the node is activated
                     state[u] = True
                     # update the counter
@@ -160,7 +172,7 @@ def saver(stats, data, directed, n):
 
 def run_simulation(n, prob, directed):
     # list of networkx graphs
-    G = generate_graphs(n, prob, a, b, directed)
+    G = generate_graphs(n, prob, directed)
 
     # info
     start_time = time.time()
@@ -203,7 +215,7 @@ def run_simulation(n, prob, directed):
                 # info
                 if verbose == 2: print("Node", x)
                 # compute expantion
-                FLTR, level = expand_influence(graph, x, n, t)
+                FLTR, level = expand_influence(graph, x, n, t, directed)
                 # save partial results
                 metrics[t].append(FLTR)
                 levels[t].append(level)
@@ -244,8 +256,8 @@ def run_in_parallel():
         # Define probability associated to the size
         prob = [ 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*n), 1/(10*n) ]
         # update list of args
-        args.append((n, prob, True))
-        args.append((n, prob, False))
+        args.append((n, prob, True)) # directed
+        args.append((n, prob, False)) # undirected
 
     # Define the parallel processes
     # 'processes' is the number of worker processes to use. If processes is None
