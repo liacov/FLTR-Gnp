@@ -171,8 +171,15 @@ def saver(stats, data, directed, n):
 
 
 def run_simulation(n, prob, directed):
+    # info
+    start_time = time.time()
     # list of networkx graphs
     G = generate_graphs(n, prob, directed)
+    # info
+    end_time = time.time()
+    uptime = end_time - start_time
+    human_uptime = datetime.timedelta(seconds=uptime)
+    print("G({},p)'s generation  uptime: {} \n".format(n, human_uptime))
 
     # info
     start_time = time.time()
@@ -193,7 +200,7 @@ def run_simulation(n, prob, directed):
                 print('connected components: \n', [len(c) for c in sorted(
                 nx.connected_components(graph), key=len, reverse=True)])
         # node selection
-        if do_sample == True:
+        if do_sample:
             # pick randomly some nodes
             nodes = np.floor(n * np.random.rand(sample)).astype(int)
         else: nodes = graph.nodes
@@ -244,7 +251,7 @@ def run_simulation(n, prob, directed):
     end_time = time.time()
     uptime = end_time - start_time
     human_uptime = datetime.timedelta(seconds=uptime)
-    print("Size: {} \n Total uptime: {} \n".format(N, human_uptime))
+    print("Size: {} \n Total uptime: {} \n".format(n, human_uptime))
 
     # save results on a csv file
     saver(stats, data, directed, n)
