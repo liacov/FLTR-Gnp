@@ -160,7 +160,7 @@ def saver(stats, data, directed, n):
         val.to_csv("results/stats{}_{}_{}.csv".format(lab, str(n), str(key)), index = False)
 
     # keys : probabilities
-    with open("results/keys.txt", "w") as f:
+    with open("results/keys{}.txt".format(str(n)), "w") as f:
         #saving keys to file
         f.write(str(list(stats.keys())))
 
