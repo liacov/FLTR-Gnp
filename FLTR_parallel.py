@@ -123,7 +123,7 @@ def expand_influence(G, x, n, t, directed, verbose = 0):
         v = Q.pop(0)
         if directed: neigh = G.predecessors(v)
         else: neigh = G.neighbors(v)
-        for u in G.neighbors(v):
+        for u in neigh:
             # pick the inactive neighbors
             if not state[u]:
                 # update the influence value
