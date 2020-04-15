@@ -59,7 +59,7 @@ def main():
     pool = Pool() # initialize the constructor
     for i, p in enumerate(prob):
         # generate K samples for the (N,p) couple
-        G.append(pool.starmap(expand_influence, [ (N, p, directed) ] * K))
+        G.append(pool.starmap(generate_graphs, [ (N, p, directed) ] * K))
     # close constructor
     pool.close()
     # info
