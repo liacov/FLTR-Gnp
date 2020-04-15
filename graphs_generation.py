@@ -2,7 +2,6 @@ import time
 import datetime
 import numpy as np
 import networkx as nx
-from itertools import product
 
 # weight interval
 b = 1
@@ -72,9 +71,9 @@ def main():
     else: lab = 'und'
 
     # save list of list of graphs
-    np.save("graphs/graph_{}_{}".format(N, lab), G)
+    np.save("data/graphs/graph_{}_{}".format(N, lab), G)
     # keys : probabilities
-    with open("results/keys{}.txt".format(str(N)), "w") as f:
+    with open("data/out/keys{}.txt".format(str(N)), "w") as f:
         #saving keys to file
         f.write(str(list(prob)))
 
