@@ -2,6 +2,7 @@ import time
 import datetime
 import numpy as np
 import networkx as nx
+from multiprocessing import Pool
 
 # weight interval
 b = 1
@@ -13,7 +14,7 @@ directed = False
 # number of nodes (list)
 N = 10**3
 # number of sample to generate for each G
-K = 1000
+K = 500
 
 def generate_graphs(n, p, directed):
     '''
@@ -54,9 +55,13 @@ def main():
     G = []
     # info
     start_time = time.time()
+    # run in parallel the graph generator for each value of p_i
+    pool = Pool() # initialize the constructor
     for i, p in enumerate(prob):
-        # generate sample for the (n,p) couple
-        G.append(generate_graphs(N, p, directed))
+        # generate K samples for the (N,p) couple
+        G.append(pool.starmap(expand_influence, [ (N, p, directed) ] * K))
+    # close constructor
+    pool.close()
     # info
     end_time = time.time()
     uptime = end_time - start_time

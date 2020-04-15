@@ -23,7 +23,7 @@ do_sample = False
 # number of nodes to sample
 sample = 5000
 # number of graph samples
-K = 1000
+K = 500
 
 
 def expand_influence(G, x, t):
