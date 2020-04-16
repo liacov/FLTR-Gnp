@@ -53,7 +53,7 @@ def expand_influence(G, x, t):
     Q = sorted(X)
     # node states (active = True, not active = False)
     state = np.array([v in X for v in nodes])
-    # node influence (starting from zero, at most n)
+    # node incoming influence (starting from zero, at most n)
     influence = np.array([0] * N)
     # node expantion level (starting from 0 if in X, else -1. worst case: n)
     exp_level = np.array([-int(not v in X) for v in nodes])
@@ -97,28 +97,27 @@ def run_simulation_parallel():
     if do_sample: nodes = np.floor(n * np.random.rand(sample)).astype(int)  # pick randomly some nodes
     else: nodes = np.arange(N) # use all available nodes
 
-    # define containers for data, dict {prob : data}
-    out = {}
-    raw_data = {}
-    data_per_node = {}
-    data_per_prob = {}
     # run in parallel the expantion on a fixed value of p_i and save the outputs
     pool = Pool() # initialize the constructor
     for i, p in enumerate(prob):
         # associate processes to args
-        out[p] = pd.DataFrame.from_records({'args' : list(product(range(K), nodes, res)) ,
-                                            'output' : pool.starmap(expand_influence, product(G[i], nodes, res))
-                                            })
+        out = pd.DataFrame.from_records({'args' : list(product(range(K), nodes, res)) ,
+                                         'output' : pool.starmap(expand_influence, product(G[i], nodes, res))
+                                        })
         # output converted in a dataframe
-        raw_data[p] = pd.DataFrame.from_records(out[p].apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1]],axis=1),
+        raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1]],axis=1),
                                   columns= ['realization','node','resistance', 'metric','max_level'])
-        raw_data[p].to_csv('data/out/data{}_{}_{}'.format(lab, N, p))
+        del out
+        raw_data.to_csv('data/out/data{}_{}_{}.csv'.format(lab, N, p))
         # statistics per node (double index: resistance and node)
-        data_per_node[p] = pippo[p].groupby('resistance').apply(lambda x: x[['metric','max_level','node']].groupby('node').mean())
-        data_per_node[p].to_csv('data/out/data_node{}_{}_{}'.format(lab, N, p))
+        data_per_node = raw_data.groupby('resistance').apply(lambda x: x[['metric','max_level','node']].groupby('node').mean())
+        data_per_node.to_csv('data/out/data_node{}_{}_{}.csv'.format(lab, N, p))
+        del data_per_node
         # statistics per graph G(n,p,t) (single index: resistance)
-        data_per_prob[p] = pippo[p].groupby('resistance').mean()[['metric', 'max_level']]
-        data_per_prob[p].to_csv('data/out/data_graph{}_{}_{}'.format(lab, N, p))
+        data_per_prob = raw_data.groupby('resistance').mean()[['metric', 'max_level']]
+        data_per_prob.to_csv('data/out/data_graph{}_{}_{}.csv'.format(lab, N, p))
+        del data_per_prob
+        del raw_data
     pool.close() # close the constructor
 
     # info

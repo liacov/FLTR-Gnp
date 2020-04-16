@@ -1,22 +1,12 @@
 import time
 import datetime
+import argparse
 import numpy as np
 import networkx as nx
 from multiprocessing import Pool
 
-# weight interval
-b = 1
-a = 0
-# wheter or not to assign weights
-weighted = False
-# directed or not
-directed = False
-# number of nodes (list)
-N = 10**3
-# number of sample to generate for each G
-K = 500
 
-def generate_graphs(n, p, directed):
+def generate_graphs(n, p, directed, weighted, a, b):
     '''
     This function generates Erdos-Renyi weighted random graphs/digraphs of the
     same size (# nodes) with different probabilities to have an edge among two
@@ -49,38 +39,53 @@ def generate_graphs(n, p, directed):
     return G
 
 def main():
-    # define probabilities of interest
-    prob = [ 8e-1, 7e-1, 6e-1, 5e-1, 1e-2, 4e-3, 2e-3, 1/999, 1/(2*N), 1/(10*N) ]
-    # initialize the graphs container (array)
-    G = []
+    # define arguments
+    parser = argparse.ArgumentParser()
+    # graph size
+    parser.add_argument('--n', type=int)
+    # index of the probability to use
+    parser.add_argument('--p', type=int)
+    # directed or not
+    parser.add_argument('--directed', type=bool)
+    # numberof samples
+    parser.add_argument('--k', type=int, default=500)
+    # if weighted
+    parser.add_argument('--weighted', type=bool, default=False)
+    # weight interval
+    parser.add_argument('--a', type=int, default=0)
+    parser.add_argument('--b', type=int, default=1)
+    # parse arguments to dictionary
+    args = parser.parse_args()
+
+    # load probabilities p_i
+    with open('data/out/keys{}.txt'.format(args.n), 'r') as f:
+        prob = eval(f.read())
+    # pick the probability of interest
+    p = prob[args.p]
+    del prob
+
     # info
     start_time = time.time()
-    # run in parallel the graph generator for each value of p_i
     pool = Pool() # initialize the constructor
-    for i, p in enumerate(prob):
-        # generate K samples for the (N,p) couple
-        G.append(pool.starmap(generate_graphs, [ (N, p, directed) ] * K))
+    # generate K samples for the (N,p) couple
+    G = pool.starmap(generate_graphs, [ (args.n, p, args.directed, args.weighted, args.a, args.b) ] * args.k)
     # close constructor
     pool.close()
     # info
     end_time = time.time()
     uptime = end_time - start_time
     human_uptime = datetime.timedelta(seconds=uptime)
-    print("\n\nG({},p)'s samples generation uptime: {}".format(N, human_uptime))
-    print("Probabilities:\n", prob)
-    print("Directed:", directed)
+    print("\n\nG({},{})'s samples generation uptime: {}".format(args.n, p, human_uptime))
+    print("Directed:", args.directed)
     print()
 
     # check the directed value
-    if directed: lab = 'dir'
+    if args.directed: lab = 'dir'
     else: lab = 'und'
 
     # save list of list of graphs
-    np.save("data/graphs/graph_{}_{}".format(N, lab), G)
-    # keys : probabilities
-    with open("data/out/keys{}.txt".format(str(N)), "w") as f:
-        #saving keys to file
-        f.write(str(list(prob)))
+    np.save("data/graphs/graph_{}_{}_{}".format(args.n, p, lab), G)
+
 
 if __name__ == "__main__":
     main()
