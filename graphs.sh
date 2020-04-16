@@ -9,9 +9,9 @@
 #SBATCH --mail-type=ALL
 
 #SBATCH --array=0-3
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=30G
-#SBATCH --partition=long
+#SBATCH --cpus-per-task=15
+#SBATCH --mem=40G
+#SBATCH --partition=medium
 
 # Run the python script
-python3 graphs_generation.py --p $SLURM_ARRAY_TASK_ID --n 1000 --directed True --k 500
+python3 graphs_generation.py --p $SLURM_ARRAY_TASK_ID --n 1000 --directed False --k 500
