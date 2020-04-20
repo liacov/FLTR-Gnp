@@ -80,10 +80,10 @@ def run_simulation_parallel(params):
     # load resistance values
     res = np.load('data/out/res_phase1.npy')
     # check the directed value
-    if params.d: lab = '_dir'
-    else: lab = '_und'
+    if params.d: lab = 'dir'
+    else: lab = 'und'
     # load graphs G(N,p_i) from adjacency matrices
-    G = [ nx.from_numpy_matrix(graph) for graph in np.load('data/graphs/graph_{}_{}{}.npy'.format(params.n, p, lab)) ]
+    G = [ nx.from_numpy_matrix(graph) for graph in np.load('data/graphs/graph_{}_{}_{}.npy'.format(params.n, p, lab)) ]
     # select the nodes of interest
     if params.do_sample:
         nodes = np.floor(params.n * np.random.rand(sample)).astype(int)  # pick randomly some nodes
@@ -103,14 +103,14 @@ def run_simulation_parallel(params):
     raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1]],axis=1),
                               columns= ['realization','node','resistance', 'metric','max_level'])
     del out
-    raw_data.to_csv('data/out/data{}_{}_{}.csv'.format(lab, params.n, p))
+    raw_data.to_csv('data/out/data_{}_{}_{}.csv'.format(lab, params.n, p))
     # statistics per node (double index: resistance and node)
     data_per_node = raw_data.groupby('resistance').apply(lambda x: x[['metric','max_level','node']].groupby('node').mean())
-    data_per_node.to_csv('data/out/data_node{}_{}_{}.csv'.format(lab, params.n, p))
+    data_per_node.to_csv('data/out/data_node_{}_{}_{}.csv'.format(lab, params.n, p))
     del data_per_node
     # statistics per graph G(n,p,t) (single index: resistance)
     data_per_prob = raw_data.groupby('resistance').mean()[['metric', 'max_level']]
-    data_per_prob.to_csv('data/out/data_graph{}_{}_{}.csv'.format(lab, params.n, p))
+    data_per_prob.to_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, params.n, p))
     del data_per_prob
     del raw_data
     # close the constructor
@@ -138,8 +138,7 @@ if __name__ == "__main__":
     # do node sample or not
     parser.add_argument('--yes_sample', dest='do_sample', action='store_true')
     parser.add_argument('--no_sample', dest='do_sample', action='store_false')
-    parser.set_defaults(d=True)
-    parser.add_argument('--do_sample', type=bool, default=True)
+    parser.set_defaults(do_sample=False)
     # node sample size
     parser.add_argument('--sample', type=int, default=5000)
     # number of samples for Gnp
