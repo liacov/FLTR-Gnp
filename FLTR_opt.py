@@ -6,6 +6,7 @@ Created on Tue Apr 14 2020
 
 import time
 import datetime
+import argparse
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -13,7 +14,7 @@ from itertools import product
 from multiprocessing import Pool
 
 
-def expand_influence(G, x, t, directed):
+def expand_influence(G, x, t, directed, n):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
@@ -30,7 +31,7 @@ def expand_influence(G, x, t, directed):
     # save nodes in an numpy array
     nodes = np.array(G.nodes)
     # convert the percentage in a number
-    T = t * N
+    T = t * n
     # compute the activation set for the node of interest
     if directed: X = [y for y in G.predecessors(x)] + [x]
     else: X = [y for y in G.neighbors(x)] + [x]
@@ -41,7 +42,7 @@ def expand_influence(G, x, t, directed):
     # node states (active = True, not active = False)
     state = np.array([v in X for v in nodes])
     # node incoming influence (starting from zero, at most n)
-    influence = np.array([0] * N)
+    influence = np.array([0] * n)
     # node expantion level (starting from 0 if in X, else -1. worst case: n)
     exp_level = np.array([-int(not v in X) for v in nodes])
 
@@ -79,13 +80,15 @@ def run_simulation_parallel(params):
     # load resistance values
     res = np.load('data/out/res_phase1.npy')
     # check the directed value
-    if params.directed: lab = '_dir'
+    if params.d: lab = '_dir'
     else: lab = '_und'
-    # load graphs G(N,p_i)
-    G = np.load('data/graphs/graphs_{}_{}'.format(params.n, lab))
+    # load graphs G(N,p_i) from adjacency matrices
+    G = [ nx.from_numpy_matrix(graph) for graph in np.load('data/graphs/graph_{}_{}{}.npy'.format(params.n, p, lab)) ]
     # select the nodes of interest
-    if params.do_sample: nodes = np.floor(n * np.random.rand(sample)).astype(int)  # pick randomly some nodes
-    else: nodes = np.arange(N) # use all available nodes
+    if params.do_sample:
+        nodes = np.floor(params.n * np.random.rand(sample)).astype(int)  # pick randomly some nodes
+    else:
+        nodes = np.arange(params.n) # use all available nodes
 
     # info
     start_time = time.time()
@@ -93,8 +96,8 @@ def run_simulation_parallel(params):
     # run in parallel the expantion on a fixed value of p_i and save the outputs
     pool = Pool() # initialize the constructor
     # associate processes to args
-    out = pd.DataFrame.from_records({'args' : list(product(range(K), nodes, res)) ,
-                                     'output' : pool.starmap(expand_influence, product(G[i], nodes, res, params.directed))
+    out = pd.DataFrame.from_records({'args' : list(product(range(params.k), nodes, res)) ,
+                                     'output' : pool.starmap(expand_influence, product(G, nodes, res, [params.d], [params.n]))
                                     })
     # output converted in a dataframe
     raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1]],axis=1),
@@ -117,7 +120,7 @@ def run_simulation_parallel(params):
     end_time = time.time()
     uptime = end_time - start_time
     human_uptime = datetime.timedelta(seconds=uptime)
-    print("Size: {} \n Total uptime: {} \n".format(N, human_uptime))
+    print("Size: {} \n Total uptime: {} \n".format(params.n, human_uptime))
 
 
 if __name__ == "__main__":
@@ -129,8 +132,13 @@ if __name__ == "__main__":
     # index of the probability to use
     parser.add_argument('--p', type=int)
     # directed or not
-    parser.add_argument('--directed', type=bool)
+    parser.add_argument('--dir', dest='d', action='store_true')
+    parser.add_argument('--und', dest='d', action='store_false')
+    parser.set_defaults(d=True)
     # do node sample or not
+    parser.add_argument('--yes_sample', dest='do_sample', action='store_true')
+    parser.add_argument('--no_sample', dest='do_sample', action='store_false')
+    parser.set_defaults(d=True)
     parser.add_argument('--do_sample', type=bool, default=True)
     # node sample size
     parser.add_argument('--sample', type=int, default=5000)
