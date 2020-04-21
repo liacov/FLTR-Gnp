@@ -35,21 +35,38 @@ def main():
     # parse arguments to dictionary
     args = parser.parse_args()
 
+    print(args)
+
+    # load probabilities p_i
+    with open('data/out/keys{}.txt'.format(args.n), 'r') as f:
+        prob = eval(f.read())
+    # pick the probability of interest
+    p = prob[args.p]
+    del prob
+
+    # check the directed value
+    if args.d: lab = 'dir'
+    else: lab = 'und'
+
     # info
     start_time = time.time()
     # save graphs path
     path = 'data/graphs/graph_{}_{}_{}.npy'.format(args.n, p, lab)
     if args.d:
-        # not symmetric random adj matrix with zero diagonal
-        np.save(path, np.fill_diagonal(np.random.binomial(1, args.p, (args.k, args.n, args.p)), 0))
+        # not symmetric random adj matrix
+        A = np.random.binomial(1, p, (args.k, args.n, args.n))
+        for i in range(A.shape[0]):
+            # fill diagonal with zeros in place
+            np.fill_diagonal(A[i,:,:], 0)
+        np.save(path, A)
     else:
         # not symmetric random adj matrix
-        A = np.random.binomial(1, args.p, (args.k, args.n, args.p), 0)
+        A = np.random.binomial(1, p, (args.k, args.n, args.n), 0)
         # make symmetric and with zero diagonal
         for i in range(A.shape[0]):
-            # triangularize
+            # triangularize (copy)
             A[i,:,:] = np.tril(A[i,:,:])
-            # make symm
+            # make symm (transpose = copy)
             A[i,:,:] = A[i,:,:] + np.transpose(A[i,:,:])
         np.save(path, A)
     # info
