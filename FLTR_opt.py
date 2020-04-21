@@ -142,7 +142,7 @@ if __name__ == "__main__":
     # node sample size
     parser.add_argument('--sample', type=int, default=5000)
     # number of samples for Gnp
-    parser.add_argument('--k', type=int, default=500)
+    parser.add_argument('--k', type=int, default=50)
     '''
     # Not impremented in the FLTR
     # if weighted

@@ -65,7 +65,7 @@ def main():
     parser.add_argument('--und', dest='d', action='store_false')
     parser.set_defaults(d=True)
     # number of samples for Gnp
-    parser.add_argument('--k', type=int, default=500)
+    parser.add_argument('--k', type=int, default=50)
     # parse arguments to dictionary
     args = parser.parse_args()
 

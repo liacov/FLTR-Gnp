@@ -1,3 +1,9 @@
+"""
+Created on Tue Apr 14 2020
+
+@author: Laura Iacovissi
+"""
+
 import time
 import datetime
 import argparse
@@ -51,7 +57,7 @@ def main():
     parser.add_argument('--no_app', dest='append', action='store_false')
     parser.set_defaults(append=False)
     # numberof samples
-    parser.add_argument('--k', type=int, default=500)
+    parser.add_argument('--k', type=int, default=50)
     # if weighted
     parser.add_argument('--weighted', type=bool, default=False)
     # weight interval

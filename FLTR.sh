@@ -14,4 +14,4 @@
 #SBATCH --partition=medium
 
 # Run the python script
-python3 FLTR_opt.py --p $SLURM_ARRAY_TASK_ID --n 1000 --und --k 500 --no_sample
+python3 FLTR_opt.py --p $SLURM_ARRAY_TASK_ID --n 1000 --und --k 50 --no_sample
