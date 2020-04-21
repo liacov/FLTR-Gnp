@@ -37,7 +37,7 @@ def main():
 
     # info
     start_time = time.time()
-    # graph path
+    # save graphs path
     path = 'data/graphs/graph_{}_{}_{}.npy'.format(args.n, p, lab)
     if args.d:
         # not symmetric random adj matrix with zero diagonal
