@@ -14,4 +14,4 @@
 #SBATCH --partition=short
 
 # Run the python script
-python3 graphs_generation.py --p $SLURM_ARRAY_TASK_ID --n 5000 --dir --k 50 --no_app
+python3 numpy_generation.py --p $SLURM_ARRAY_TASK_ID --n 5000 --dir --k 50

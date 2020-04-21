@@ -80,10 +80,16 @@ def run_simulation_parallel(params):
     # load resistance values
     res = np.load('data/out/res_phase1.npy')
     # check the directed value
-    if params.d: lab = 'dir'
-    else: lab = 'und'
+    if params.d:
+        lab = 'dir'
+        type = nx.DiGraph()
+    else:
+        lab = 'und'
+        type = nx.Graph()
     # load graphs G(N,p_i) from adjacency matrices
-    G = [ nx.from_numpy_matrix(graph) for graph in np.load('data/graphs/graph_{}_{}_{}.npy'.format(params.n, p, lab)) ]
+    matrices = np.load('data/graphs/graph_{}_{}_{}.npy'.format(params.n, p, lab))
+    G = [ nx.from_numpy_matrix(matrices[i,:,:], create_using=type) for i in range(matrices.shape[0]) ]
+    del matrices
     # select the nodes of interest
     if params.do_sample:
         nodes = np.floor(params.n * np.random.rand(sample)).astype(int)  # pick randomly some nodes

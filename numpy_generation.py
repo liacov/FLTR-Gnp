@@ -61,11 +61,11 @@ def main():
         np.save(path, A)
     else:
         # not symmetric random adj matrix
-        A = np.random.binomial(1, p, (args.k, args.n, args.n), 0)
+        A = np.random.binomial(1, p, (args.k, args.n, args.n))
         # make symmetric and with zero diagonal
         for i in range(A.shape[0]):
-            # triangularize (copy)
-            A[i,:,:] = np.tril(A[i,:,:])
+            # triangularize (copy) with zero diag
+            A[i,:,:] = np.tril(A[i,:,:], -1)
             # make symm (transpose = copy)
             A[i,:,:] = A[i,:,:] + np.transpose(A[i,:,:])
         np.save(path, A)
