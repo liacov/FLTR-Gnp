@@ -92,7 +92,7 @@ def run_simulation_parallel(params):
     del matrices
     # select the nodes of interest
     if params.do_sample:
-        nodes = np.floor(params.n * np.random.rand(sample)).astype(int)  # pick randomly some nodes
+        nodes = np.floor(params.n * np.random.rand(params.sample)).astype(int)  # pick randomly some nodes
     else:
         nodes = np.arange(params.n) # use all available nodes
 
