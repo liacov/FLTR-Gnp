@@ -12,18 +12,18 @@ import matplotlib.pyplot as plt
 def plot_data_nodes(prob, directed, n, res):
     # check the directed value
     if directed:
-        lab = 'directed'
-    else : lab = 'undirected'
+        lab = 'dir'
+    else : lab = 'und'
 
     fig, axs = plt.subplots(len(prob), 2, figsize = (20,40))
     for i, p in enumerate(prob):
         # load data
-        data = read_csv('data/out/data_node_{}_{}_{}.csv'.format(lab, n, p))
+        data = pd.read_csv('data/out/data_node_{}_{}_{}.csv'.format(lab, n, p))
         # plot data
         axs[i,0].set_title('Metrics with p = {}'.format(p), fontsize=15)
-        _ = axs[i,0].boxplot([data.loc[k, 'metric'] for k in res], positions = [1,2,3,4], labels=res)
+        _ = axs[i,0].boxplot([data.loc[data.resistance == k, 'metric'] for k in res], positions = [1,2,3,4], labels=res)
         axs[i,1].set_title('Levels with p = {}'.format(p), fontsize=15)
-        _ = axs[i,1].boxplot([data.loc[k, 'max_level'] for k in res], positions = [1,2,3,4], labels=res)
+        _ = axs[i,1].boxplot([data.loc[data.resistance == k, 'max_level'] for k in res], positions = [1,2,3,4], labels=res)
         # delete from memory
         del data
 
@@ -35,13 +35,13 @@ def plot_data_nodes(prob, directed, n, res):
 def plot_data_graphs(prob, directed, n):
     # check the directed value
     if directed:
-        lab = 'directed'
-    else : lab = 'undirected'
+        lab = 'dir'
+    else : lab = 'und'
 
     fig, axs = plt.subplots(len(prob), 2, figsize = (20,40))
     for i, p in enumerate(prob):
         # load data
-        data = read_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, n, p))
+        data = pd.read_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, n, p))
         # plot data
         axs[i,0].set_title('Metrics with p = {}'.format(p), fontsize=15)
         data['metric'].transpose().plot(kind='line',ax=axs[i,0])
@@ -64,14 +64,18 @@ def main():
     parser.add_argument('--dir', dest='d', action='store_true')
     parser.add_argument('--und', dest='d', action='store_false')
     parser.set_defaults(d=True)
-    # number of samples for Gnp
-    parser.add_argument('--k', type=int, default=50)
+    # probability interval
+    parser.add_argument('--from_p', type=int, default=0)
+    parser.add_argument('--to_p', type=int, default=9)
     # parse arguments to dictionary
     args = parser.parse_args()
 
     # reading probabilities
     with open('data/out/keys{}.txt'.format(args.n), 'r') as f:
         prob = eval(f.read())
+    # filtering probabilities
+    prob = prob[args.from_p : args.to_p + 1]
+    print('Used probabilities:', prob)
     # reading resistances
     res = np.load('data/out/res_phase1.npy')
 
@@ -82,8 +86,8 @@ def main():
     print('Connection critical point: ', conn_threshold)
     # show data on nodes per resistance value, for each gnp (mean on sample)
     plot_data_nodes(prob, args.d, args.n, res)
-    # show data on graph per resistance values, for each gnp (mean on sample)
-    plot_data_graphs(probs, args.d, args.n)
+    # show data on graph per resistance values, for each gnp (mean on sample and nodes)
+    plot_data_graphs(prob, args.d, args.n)
 
 
 if __name__ == "__main__":
