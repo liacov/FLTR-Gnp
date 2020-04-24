@@ -66,7 +66,7 @@ def expand_influence(G, x, t, directed, n):
         # enqueue the activated nodes
         Q.extend(nodes[activated])
 
-    return  total, max(exp_level)
+    return  total, max(exp_level), np.mean(exp_level)
 
 
 def run_simulation_parallel(params):
@@ -88,6 +88,7 @@ def run_simulation_parallel(params):
         type = nx.Graph()
     # load graphs G(N,p_i) from adjacency matrices
     matrices = np.load('data/graphs/graph_{}_{}_{}.npy'.format(params.n, p, lab))
+    matrices = matrices[:params.k]
     G = [ nx.from_numpy_matrix(matrices[i,:,:], create_using=type) for i in range(matrices.shape[0]) ]
     del matrices
     # select the nodes of interest
@@ -106,16 +107,16 @@ def run_simulation_parallel(params):
                                      'output' : pool.starmap(expand_influence, product(G, nodes, res, [params.d], [params.n]))
                                     })
     # output converted in a dataframe
-    raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1]],axis=1),
-                              columns= ['realization','node','resistance', 'metric','max_level'])
+    raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
+                              columns= ['realization', 'node', 'resistance', 'metric', 'max_level', 'avg_level'])
     del out
     raw_data.to_csv('data/out/data_{}_{}_{}.csv'.format(lab, params.n, p))
     # statistics per node (double index: resistance and node)
-    data_per_node = raw_data.groupby('resistance').apply(lambda x: x[['metric','max_level','node']].groupby('node').mean())
+    data_per_node = raw_data.groupby('resistance').apply(lambda x: x[['metric', 'max_level', 'avg_level', 'node']].groupby('node').mean())
     data_per_node.to_csv('data/out/data_node_{}_{}_{}.csv'.format(lab, params.n, p))
     del data_per_node
     # statistics per graph G(n,p,t) (single index: resistance)
-    data_per_prob = raw_data.groupby('resistance').mean()[['metric', 'max_level']]
+    data_per_prob = raw_data.groupby('resistance').mean()[['metric', 'max_level', 'avg_level']]
     data_per_prob.to_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, params.n, p))
     del data_per_prob
     del raw_data
