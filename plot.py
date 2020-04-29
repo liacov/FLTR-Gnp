@@ -23,7 +23,7 @@ def plot_data_nodes(prob, directed, n, res):
         axs[i,0].set_title('Metrics with p = {}'.format(p), fontsize=15)
         _ = axs[i,0].boxplot([data.loc[data.resistance == k, 'metric'] for k in res], positions = [1,2,3,4], labels=res)
         axs[i,1].set_title('Levels with p = {}'.format(p), fontsize=15)
-        _ = axs[i,1].boxplot([data.loc[data.resistance == k, 'max_level'] for k in res], positions = [1,2,3,4], labels=res)
+        _ = axs[i,1].boxplot([data.loc[data.resistance == k, 'avg_level'] for k in res], positions = [1,2,3,4], labels=res)
         # delete from memory
         del data
 
@@ -41,12 +41,12 @@ def plot_data_graphs(prob, directed, n):
     fig, axs = plt.subplots(len(prob), 2, figsize = (20,40))
     for i, p in enumerate(prob):
         # load data
-        data = pd.read_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, n, p))
+        data = pd.read_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, n, p)).set_index('resistance')
         # plot data
         axs[i,0].set_title('Metrics with p = {}'.format(p), fontsize=15)
         data['metric'].transpose().plot(kind='line',ax=axs[i,0])
         axs[i,1].set_title('Levels with p = {}'.format(p), fontsize=15)
-        data['max_level'].transpose().plot(kind='line',ax=axs[i,1])
+        data['avg_level'].transpose().plot(kind='line',ax=axs[i,1])
         # delete from memory
         del data
 
