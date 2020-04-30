@@ -1,5 +1,5 @@
 """
-Created on Tue Apr 14 2020
+Created on Wed Apr 29 2020
 
 @author: Laura Iacovissi
 """
@@ -9,32 +9,32 @@ import datetime
 import argparse
 import numpy as np
 import pandas as pd
-import networkx as nx
 from itertools import product
 from multiprocessing import Pool
 
 
-def expand_influence(G, x, t, directed, n):
+def expand_influence(G, x, t, n):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
     INPUT
-    G : networkx Graph/DiGraph, G = (V,E)
+    G : numpy, adjacency matrix of a graph (n x n). i -> j iff A{i,j} = 1
     x : int, node of interest
     t : float, resistance values (constant on nodes)
+    n : int, graph size
 
     OUTPUT
     total : int, FLTR(x)
     max(exp_level): int, maximum expantion level reached during the computation
+    mean(exp_level): int, mean expantion level reached during the computation
     '''
 
     # save nodes in an numpy array
-    nodes = np.array(G.nodes)
+    nodes = np.arange(n)
     # convert the percentage in a number
-    T = t * n
-    # compute the activation set for the node of interest
-    if directed: X = [y for y in G.predecessors(x)] + [x]
-    else: X = [y for y in G.neighbors(x)] + [x]
+    T = t * (n - 1)
+    # compute the activation set for the node of interest: x + succ(x)
+    X = list(np.nonzero(G[x,:])[0]) + [x]
     # initialize counter for the active nodes
     total = len(X)
     # list (queue) of active nodes
@@ -50,9 +50,8 @@ def expand_influence(G, x, t, directed, n):
     while Q != []:
         # dequeue
         v = Q.pop(0)
-        # define neighborhood mask
-        if directed: neigh = np.isin(nodes, list(G.predecessors(v)))
-        else: neigh = np.isin(nodes, list(G.neighbors(v)))
+        # define neighborhood mask: succ(v)
+        neigh = np.isin(nodes, list(np.nonzero(G[v,:])[0]))
         # update expantion levels
         exp_level[~state & neigh] = exp_level[v] + 1
         # update influence values
@@ -82,15 +81,11 @@ def run_simulation_parallel(params):
     # check the directed value
     if params.d:
         lab = 'dir'
-        type = nx.DiGraph()
     else:
         lab = 'und'
-        type = nx.Graph()
     # load graphs G(N,p_i) from adjacency matrices
     matrices = np.load('data/graphs/graph_{}_{}_{}.npy'.format(params.n, p, lab))
-    matrices = matrices[:params.k]
-    G = [ nx.from_numpy_matrix(matrices[i,:,:], create_using=type) for i in range(matrices.shape[0]) ]
-    del matrices
+    matrices = [ matrices[i, :, :] for i in range(params.k) ] # convert the data in an iterable
     # select the nodes of interest
     if params.do_sample:
         nodes = np.floor(params.n * np.random.rand(params.sample)).astype(int)  # pick randomly some nodes
@@ -104,7 +99,7 @@ def run_simulation_parallel(params):
     pool = Pool() # initialize the constructor
     # associate processes to args
     out = pd.DataFrame.from_records({'args' : list(product(range(params.k), nodes, res)) ,
-                                     'output' : pool.starmap(expand_influence, product(G, nodes, res, [params.d], [params.n]))
+                                     'output' : pool.starmap(expand_influence, product(matrices, nodes, res, [params.d], [params.n]))
                                     })
     # output converted in a dataframe
     raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
