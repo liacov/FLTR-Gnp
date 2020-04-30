@@ -41,7 +41,7 @@ def FLTM(T, Q, exp_level, influence, state, total, nodes, n, G):
             break
     return  total, max(exp_level), np.mean(exp_level)
 
-def expand_influence_np(n_job, args):
+def expand_influence(n_job, args):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
