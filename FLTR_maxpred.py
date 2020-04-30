@@ -9,11 +9,39 @@ import datetime
 import argparse
 import numpy as np
 import pandas as pd
+from numba import jit
 from itertools import product
 from multiprocessing import Pool
 
+@jit(nopython=True)
+def FLTM(T, Q, exp_level, influence, state, total, nodes, n, G):
+    # vectorized version of the influence expantion
+    for i in range(n):
+        neigh = np.array([False]*n)
+        # dequeue
+        v = Q[0]
+        Q = Q[1:]
+        # define neighborhood mask
+        for j in list(np.nonzero(G[:,v])[0]):
+            neigh[j] = True
+        # update expantion levels
+        exp_level[~state & neigh] = exp_level[v] + 1
+        # update influence values
+        influence[~state & neigh] += 1
+        # define activation mask
+        activated = ~state & neigh & (influence > T)
+        # update state values
+        state[activated] = True
+        # update counter of activated nodes
+        total += np.sum(activated)
+        # enqueue the activated nodes
+        act = nodes[activated]
+        Q = np.concatenate((Q, act))
+        if Q.size == 0:
+            break
+    return  total, max(exp_level), np.mean(exp_level)
 
-def expand_influence(G, x, t, n):
+def expand_influence_np(G, x, t, n):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
@@ -33,39 +61,20 @@ def expand_influence(G, x, t, n):
     nodes = np.arange(n)
     # convert the percentage in a number
     T = t * (n - 1)
-    # compute the activation set for the node of interest: x + succ(x)
-    X = list(np.nonzero(G[x,:])[0]) + [x]
+    # compute the activation set for the node of interest
+    X = list(np.nonzero(G[:,x])[0]) + [x]
     # initialize counter for the active nodes
     total = len(X)
     # list (queue) of active nodes
-    Q = sorted(X)
+    Q = np.array(sorted(X)).ravel()
     # node states (active = True, not active = False)
-    state = np.array([v in X for v in nodes])
+    state = np.array([v in X for v in nodes]).ravel()
     # node incoming influence (starting from zero, at most n)
-    influence = np.array([0] * n)
+    influence = np.array([0] * n).ravel()
     # node expantion level (starting from 0 if in X, else -1. worst case: n)
-    exp_level = np.array([-int(not v in X) for v in nodes])
+    exp_level = np.array([-int(not v in X) for v in nodes]).ravel()
 
-    # vectorized version of the influence expantion
-    while Q != []:
-        # dequeue
-        v = Q.pop(0)
-        # define neighborhood mask: succ(v)
-        neigh = np.isin(nodes, list(np.nonzero(G[v,:])[0]))
-        # update expantion levels
-        exp_level[~state & neigh] = exp_level[v] + 1
-        # update influence values
-        influence[~state & neigh] += 1
-        # define activation mask
-        activated = ~state & neigh & (influence > T)
-        # update state values
-        state[activated] = True
-        # update counter of activated nodes
-        total += sum(activated)
-        # enqueue the activated nodes
-        Q.extend(nodes[activated])
-
-    return  total, max(exp_level), np.mean(exp_level)
+    return FLTM(T, Q, exp_level, influence, state, total, nodes, n, G)
 
 
 def run_simulation_parallel(params):
