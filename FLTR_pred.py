@@ -9,11 +9,42 @@ import datetime
 import argparse
 import numpy as np
 import pandas as pd
+from numba import jit
 from itertools import product
 from multiprocessing import Pool
 
 
-def expand_influence(G, x, t, n):
+@jit(nopython=True)
+def FLTM(t, Q, exp_level, influence, state, total, nodes, pred, n, G):
+    # vectorized version of the influence expantion
+    for i in range(n):
+        neigh = np.array([False]*n)
+        # dequeue
+        v = Q[0]
+        Q = Q[1:]
+        # define neighborhood mask
+        for j in list(np.nonzero(G[v,:])[0]):
+            neigh[j] = True
+        # update expantion levels
+        exp_level[~state & neigh] = exp_level[v] + 1
+        # update influence values
+        influence[~state & neigh] += 1
+        # define activation mask
+        activated = ~state & neigh & (influence > pred * t)
+        # update state values
+        state[activated] = True
+        # update counter of activated nodes
+        total += np.sum(activated)
+        # enqueue the activated nodes
+        act = nodes[activated]
+        Q = np.concatenate((Q, act))
+        if Q.size == 0:
+            break
+
+    return  total, max(exp_level), np.mean(exp_level)
+
+
+def expand_influence_np(n_job, args):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
@@ -29,43 +60,28 @@ def expand_influence(G, x, t, n):
     mean(exp_level): int, mean expantion level reached during the computation
     '''
 
+    G, x, t, n, jobs = args
+
+    # info
+    print('Jobs {}/{}'.format(int(n_job), int(jobs)))
     # save nodes in an numpy array
     nodes = np.arange(n)
     # compute the activation set for the node of interest
-    X = list(np.nonzero(G[:,x])[0]) + [x]
+    X = list(np.nonzero(G[x,:])[0]) + [x]
     # initialize counter for the active nodes
     total = len(X)
     # list (queue) of active nodes
-    Q = sorted(X)
+    Q = np.array(sorted(X))
     # node states (active = True, not active = False)
     state = np.array([v in X for v in nodes])
     # node incoming influence (starting from zero, at most n)
     influence = np.array([0] * n)
     # node expantion level (starting from 0 if in X, else -1. worst case: n)
     exp_level = np.array([-int(not v in X) for v in nodes])
-    # number of predecessors for each node
-    pred = np.array([len(np.nonzero(G[:,x])[0]) for x in nodes])
+        # number of predecessors for each node
+    pred = np.array([len(np.nonzero(G[:,v])[0]) for v in nodes])
 
-    # vectorized version of the influence expantion
-    while Q != []:
-        # dequeue
-        v = Q.pop(0)
-        # define neighborhood mask
-        neigh = np.isin(nodes, list(np.nonzero(G[:,v])[0]))
-        # update expantion levels
-        exp_level[~state & neigh] = exp_level[v] + 1
-        # update influence values
-        influence[~state & neigh] += 1
-        # define activation mask
-        activated = ~state & neigh & (influence > pred * t)
-        # update state values
-        state[activated] = True
-        # update counter of activated nodes
-        total += sum(activated)
-        # enqueue the activated nodes
-        Q.extend(nodes[activated])
-
-    return  total, max(exp_level), np.mean(exp_level)
+    return FLTM(t, Q, exp_level, influence, state, total, nodes, pred, n, G)
 
 
 def run_simulation_parallel(params):
@@ -97,13 +113,18 @@ def run_simulation_parallel(params):
 
     # run in parallel the expantion on a fixed value of p_i and save the outputs
     pool = Pool() # initialize the constructor
+    # compute number of jobs
+    n_jobs = params.k * len(nodes) * len(res)
     # associate processes to args
-    out = pd.DataFrame.from_records({'args' : list(product(range(params.k), nodes, res)) ,
-                                     'output' : pool.starmap(expand_influence, product(matrices, nodes, res, [params.d], [params.n]))
+    out = pd.DataFrame.from_records({
+                                    'args' : list(product(range(params.k), nodes, res)) ,
+                                    'output' : pool.starmap(expand_influence,
+                                                            enumerate(product(matrices, nodes, res, [params.d], [params.n], [n_jobs])))
                                     })
     # output converted in a dataframe
-    raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
-                              columns= ['realization', 'node', 'resistance', 'metric', 'max_level', 'avg_level'])
+    raw_data = pd.DataFrame.from_records(
+                            out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
+                            columns= ['realization', 'node', 'resistance', 'metric', 'max_level', 'avg_level'])
     del out
     raw_data.to_csv('data/out/data_{}_{}_{}.csv'.format(lab, params.n, p))
     # statistics per node (double index: resistance and node)
@@ -122,6 +143,7 @@ def run_simulation_parallel(params):
     end_time = time.time()
     uptime = end_time - start_time
     human_uptime = datetime.timedelta(seconds=uptime)
+    print()
     print("Size: {} \n Total uptime: {} \n".format(params.n, human_uptime))
 
 

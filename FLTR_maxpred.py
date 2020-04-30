@@ -22,7 +22,7 @@ def FLTM(T, Q, exp_level, influence, state, total, nodes, n, G):
         v = Q[0]
         Q = Q[1:]
         # define neighborhood mask
-        for j in list(np.nonzero(G[:,v])[0]):
+        for j in list(np.nonzero(G[v,:])[0]):
             neigh[j] = True
         # update expantion levels
         exp_level[~state & neigh] = exp_level[v] + 1
@@ -41,7 +41,7 @@ def FLTM(T, Q, exp_level, influence, state, total, nodes, n, G):
             break
     return  total, max(exp_level), np.mean(exp_level)
 
-def expand_influence_np(G, x, t, n):
+def expand_influence_np(n_job, args):
     '''
     This function computes the FLTR metric for the x node in the G graph.
 
@@ -57,22 +57,27 @@ def expand_influence_np(G, x, t, n):
     mean(exp_level): int, mean expantion level reached during the computation
     '''
 
+
+    G, x, t, n, jobs = args
+
+    # info
+    print('Jobs {}/{}'.format(int(n_job), int(jobs)))
     # save nodes in an numpy array
     nodes = np.arange(n)
     # convert the percentage in a number
     T = t * (n - 1)
     # compute the activation set for the node of interest
-    X = list(np.nonzero(G[:,x])[0]) + [x]
+    X = list(np.nonzero(G[x,:])[0]) + [x]
     # initialize counter for the active nodes
     total = len(X)
     # list (queue) of active nodes
-    Q = np.array(sorted(X)).ravel()
+    Q = np.array(sorted(X))
     # node states (active = True, not active = False)
-    state = np.array([v in X for v in nodes]).ravel()
+    state = np.array([v in X for v in nodes])
     # node incoming influence (starting from zero, at most n)
-    influence = np.array([0] * n).ravel()
+    influence = np.array([0] * n)
     # node expantion level (starting from 0 if in X, else -1. worst case: n)
-    exp_level = np.array([-int(not v in X) for v in nodes]).ravel()
+    exp_level = np.array([-int(not v in X) for v in nodes])
 
     return FLTM(T, Q, exp_level, influence, state, total, nodes, n, G)
 
@@ -106,9 +111,13 @@ def run_simulation_parallel(params):
 
     # run in parallel the expantion on a fixed value of p_i and save the outputs
     pool = Pool() # initialize the constructor
+    # compute number of jobs
+    n_jobs = params.k * len(nodes) * len(res)
     # associate processes to args
-    out = pd.DataFrame.from_records({'args' : list(product(range(params.k), nodes, res)) ,
-                                     'output' : pool.starmap(expand_influence, product(matrices, nodes, res, [params.d], [params.n]))
+    out = pd.DataFrame.from_records({
+                                    'args' : list(product(range(params.k), nodes, res)) ,
+                                    'output' : pool.starmap(expand_influence,
+                                                            enumerate(product(matrices, nodes, res, [params.d], [params.n], [n_jobs])))
                                     })
     # output converted in a dataframe
     raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
@@ -131,6 +140,7 @@ def run_simulation_parallel(params):
     end_time = time.time()
     uptime = end_time - start_time
     human_uptime = datetime.timedelta(seconds=uptime)
+    print()
     print("Size: {} \n Total uptime: {} \n".format(params.n, human_uptime))
 
 
