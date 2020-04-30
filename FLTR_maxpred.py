@@ -117,7 +117,7 @@ def run_simulation_parallel(params):
     out = pd.DataFrame.from_records({
                                     'args' : list(product(range(params.k), nodes, res)) ,
                                     'output' : pool.starmap(expand_influence,
-                                                            enumerate(product(matrices, nodes, res, [params.d], [params.n], [n_jobs])))
+                                                            enumerate(product(matrices, nodes, res, [params.n], [n_jobs])))
                                     })
     # output converted in a dataframe
     raw_data = pd.DataFrame.from_records(out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
