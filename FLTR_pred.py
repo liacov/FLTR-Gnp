@@ -87,13 +87,13 @@ def expand_influence_np(n_job, args):
 def run_simulation_parallel(params):
 
     # load probabilities p_i
-    with open('data/out/keys{}.txt'.format(params.n), 'r') as f:
+    with open('data/keys{}.txt'.format(params.n), 'r') as f:
         prob = eval(f.read())
     # pick the probability of interest
     p = prob[params.p]
     del prob
     # load resistance values
-    res = np.load('data/out/res_phase1.npy')
+    res = np.load('data/res_phase1.npy')
     # check the directed value
     if params.d:
         lab = 'dir'
@@ -126,14 +126,14 @@ def run_simulation_parallel(params):
                             out.apply(lambda x: [x.args[0],x.args[1],x.args[2],x.output[0],x.output[1],x.output[2]],axis=1),
                             columns= ['realization', 'node', 'resistance', 'metric', 'max_level', 'avg_level'])
     del out
-    raw_data.to_csv('data/out/data_{}_{}_{}.csv'.format(lab, params.n, p))
+    raw_data.to_csv('data/pred/data_{}_{}_{}.csv'.format(lab, params.n, p))
     # statistics per node (double index: resistance and node)
     data_per_node = raw_data.groupby('resistance').apply(lambda x: x[['metric', 'max_level', 'avg_level', 'node']].groupby('node').mean())
-    data_per_node.to_csv('data/out/data_node_{}_{}_{}.csv'.format(lab, params.n, p))
+    data_per_node.to_csv('data/pred/data_node_{}_{}_{}.csv'.format(lab, params.n, p))
     del data_per_node
     # statistics per graph G(n,p,t) (single index: resistance)
     data_per_prob = raw_data.groupby('resistance').mean()[['metric', 'max_level', 'avg_level']]
-    data_per_prob.to_csv('data/out/data_graph_{}_{}_{}.csv'.format(lab, params.n, p))
+    data_per_prob.to_csv('data/pred/data_graph_{}_{}_{}.csv'.format(lab, params.n, p))
     del data_per_prob
     del raw_data
     # close the constructor
