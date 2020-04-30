@@ -31,8 +31,6 @@ def expand_influence(G, x, t, n):
 
     # save nodes in an numpy array
     nodes = np.arange(n)
-    # convert the percentage in a number
-    T = t * (n - 1)
     # compute the activation set for the node of interest
     X = list(np.nonzero(G[:,x])[0]) + [x]
     # initialize counter for the active nodes
@@ -45,6 +43,8 @@ def expand_influence(G, x, t, n):
     influence = np.array([0] * n)
     # node expantion level (starting from 0 if in X, else -1. worst case: n)
     exp_level = np.array([-int(not v in X) for v in nodes])
+    # number of predecessors for each node
+    pred = np.array([len(np.nonzero(G[:,x])[0]) for x in nodes])
 
     # vectorized version of the influence expantion
     while Q != []:
@@ -57,7 +57,7 @@ def expand_influence(G, x, t, n):
         # update influence values
         influence[~state & neigh] += 1
         # define activation mask
-        activated = ~state & neigh & (influence > T)
+        activated = ~state & neigh & (influence > pred * t)
         # update state values
         state[activated] = True
         # update counter of activated nodes
