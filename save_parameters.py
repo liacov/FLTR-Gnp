@@ -14,13 +14,13 @@ def main():
         print(n, prob)
         print()
         # save probabilities
-        with open('data/out/keys{}.txt'.format(str(n)), 'w') as f:
+        with open('data/keys{}.txt'.format(str(n)), 'w') as f:
             #saving keys to file
             f.write(str(list(prob)))
     # save the explored values of n
-    np.save('data/out/sizes.npy', N)
+    np.save('data/sizes.npy', N)
     # save resistances thresholds
-    np.save('data/out/res_phase1.npy', [ 0.25, 0.5, 0.75, 1 ])  # phase 1 values
+    np.save('data/res_phase1.npy', [ 0.25, 0.5, 0.75, 1 ])  # phase 1 values
 
 if __name__ == "__main__":
     main()
