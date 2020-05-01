@@ -11,4 +11,4 @@
 #SBATCH --partition=short
 
 # Run the python script
-python3 plot.py --n 5000 --dir --from_p 3 --maxpred
+python3 plot.py --n 1000 --dir --maxpred
