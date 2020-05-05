@@ -11,12 +11,18 @@ def main():
         prob = [ 8e-1, 7e-1, 6e-1, 1e-1, 1e-2, x,                         # connected regine (high - low)
                 1/(3*n) + (2*np.log(n))/(3*n), 2/(3*n) + np.log(n)/(3*n), # supercritical regime
                 1/(2*n), 1/(10*n) ]                                       # subscritical regime
+        prob2 = np.arange(1e-1 - 0.05, 1e-2, -(1e-1 - 1e-2)/20)
         print(n, prob)
+        print()
+        print(n, prob2)
         print()
         # save probabilities
         with open('data/keys{}.txt'.format(str(n)), 'w') as f:
             #saving keys to file
             f.write(str(list(prob)))
+        with open('data/keys_ref{}.txt'.format(str(n)), 'w') as f:
+            #saving keys to file
+            f.write(str(list(prob2)))
     # save the explored values of n
     np.save('data/sizes.npy', N)
     # save resistances thresholds

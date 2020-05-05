@@ -38,7 +38,7 @@ def main():
     print(args)
 
     # load probabilities p_i
-    with open('data/out/keys{}.txt'.format(args.n), 'r') as f:
+    with open('data/keys_ref{}.txt'.format(args.n), 'r') as f:
         prob = eval(f.read())
     # pick the probability of interest
     p = prob[args.p]

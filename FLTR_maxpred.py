@@ -85,7 +85,7 @@ def expand_influence(n_job, args):
 def run_simulation_parallel(params):
 
     # load probabilities p_i
-    with open('data/keys{}.txt'.format(params.n), 'r') as f:
+    with open('data/keys_ref{}.txt'.format(params.n), 'r') as f:
         prob = eval(f.read())
     # pick the probability of interest
     p = prob[params.p]
