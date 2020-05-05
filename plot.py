@@ -19,7 +19,7 @@ def plot_data_nodes(prob, directed, n, res, t):
         thr = 'maxpred'
     else : thr = 'pred'
 
-    fig, axs = plt.subplots(len(prob), 2, figsize = (20,40))
+    fig, axs = plt.subplots(len(prob), 3, figsize = (20,40))
     for i, p in enumerate(prob):
         # load data
         data = pd.read_csv('data/{}/data_node_{}_{}_{}.csv'.format(thr, lab, n, p))
@@ -28,6 +28,8 @@ def plot_data_nodes(prob, directed, n, res, t):
         _ = axs[i,0].boxplot([data.loc[data.resistance == k, 'metric'] for k in res], positions = [1,2,3,4], labels=res)
         axs[i,1].set_title('Max levels with p = {}'.format(p), fontsize=15)
         _ = axs[i,1].boxplot([data.loc[data.resistance == k, 'max_level'] for k in res], positions = [1,2,3,4], labels=res)
+        axs[i,2].set_title('Avg levels with p = {}'.format(p), fontsize=15)
+        _ = axs[i,2].boxplot([data.loc[data.resistance == k, 'avg_level'] for k in res], positions = [1,2,3,4], labels=res)
         # delete from memory
         del data
 
@@ -46,7 +48,7 @@ def plot_data_graphs(prob, directed, n, t):
         thr = 'maxpred'
     else: thr = 'pred'
 
-    fig, axs = plt.subplots(len(prob), 2, figsize = (20,40))
+    fig, axs = plt.subplots(len(prob), 3, figsize = (20,40))
     for i, p in enumerate(prob):
         # load data
         data = pd.read_csv('data/{}/data_graph_{}_{}_{}.csv'.format(thr, lab, n, p)).set_index('resistance')
@@ -55,6 +57,8 @@ def plot_data_graphs(prob, directed, n, t):
         data['metric'].transpose().plot(kind='line',ax=axs[i,0])
         axs[i,1].set_title('Max levels with p = {}'.format(p), fontsize=15)
         data['max_level'].transpose().plot(kind='line',ax=axs[i,1])
+        axs[i,2].set_title('Avg levels with p = {}'.format(p), fontsize=15)
+        data['avg_level'].transpose().plot(kind='line',ax=axs[i,2])
         # delete from memory
         del data
 

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH -J plot_5k_dir_maxpred
-#SBATCH -o images/plot_5k_dir_maxpred.res
-#SBATCH -e plot_5k_dir_maxpred.%A.err
+#SBATCH -J plot_1k_dir_maxpred
+#SBATCH -o images/plot_1k_dir_maxpred.res
+#SBATCH -e plot_1k_dir_maxpred.%A.err
 
 #SBATCH --mail-user laura.iacovissi@gmail.com
 #SBATCH --mail-type=ALL
