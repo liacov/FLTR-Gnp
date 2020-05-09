@@ -19,23 +19,23 @@ def plot_data_nodes(prob, directed, n, res, t):
         thr = 'maxpred'
     else : thr = 'pred'
 
-    fig, axs = plt.subplots(len(prob), 3, figsize = (20,40))
+    fig, axs = plt.subplots(len(prob), 3, figsize = (14,28))
     for i, p in enumerate(prob):
         # load data
         data = pd.read_csv('data/{}/data_node_{}_{}_{}.csv'.format(thr, lab, n, p))
         # plot data
-        axs[i,0].set_title('Metrics with p = {}'.format(p), fontsize=15)
+        axs[i,0].set_title('Metrics with p = {}'.format(round(p,4)), fontsize=15)
         _ = axs[i,0].boxplot([data.loc[data.resistance == k, 'metric'] for k in res], positions = [1,2,3,4], labels=res)
-        axs[i,1].set_title('Max levels with p = {}'.format(p), fontsize=15)
+        axs[i,1].set_title('Max levels with p = {}'.format(round(p,4)), fontsize=15)
         _ = axs[i,1].boxplot([data.loc[data.resistance == k, 'max_level'] for k in res], positions = [1,2,3,4], labels=res)
-        axs[i,2].set_title('Avg levels with p = {}'.format(p), fontsize=15)
+        axs[i,2].set_title('Avg levels with p = {}'.format(round(p,4)), fontsize=15)
         _ = axs[i,2].boxplot([data.loc[data.resistance == k, 'avg_level'] for k in res], positions = [1,2,3,4], labels=res)
         # delete from memory
         del data
 
-    plt.suptitle('Data visualization for n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
+    #plt.suptitle('Data visualization for n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
     plt.tight_layout()
-    plt.savefig('images/stats_per_node_{}_{}_{}.jpeg'.format(thr, lab, n))
+    plt.savefig('images/stats_per_node_{}_{}_{}.jpeg'.format(thr, lab, n), bbox_inches='tight')
 
 
 def plot_data_graphs(prob, directed, n, t):
@@ -48,23 +48,23 @@ def plot_data_graphs(prob, directed, n, t):
         thr = 'maxpred'
     else: thr = 'pred'
 
-    fig, axs = plt.subplots(len(prob), 3, figsize = (20,40))
+    fig, axs = plt.subplots(len(prob), 3, figsize = (14,28))
     for i, p in enumerate(prob):
         # load data
         data = pd.read_csv('data/{}/data_graph_{}_{}_{}.csv'.format(thr, lab, n, p)).set_index('resistance')
         # plot data
-        axs[i,0].set_title('Metrics with p = {}'.format(p), fontsize=15)
+        axs[i,0].set_title('Metrics with p = {}'.format(round(p,4)), fontsize=15)
         data['metric'].transpose().plot(kind='line',ax=axs[i,0])
-        axs[i,1].set_title('Max levels with p = {}'.format(p), fontsize=15)
+        axs[i,1].set_title('Max levels with p = {}'.format(round(p,4)), fontsize=15)
         data['max_level'].transpose().plot(kind='line',ax=axs[i,1])
-        axs[i,2].set_title('Avg levels with p = {}'.format(p), fontsize=15)
+        axs[i,2].set_title('Avg levels with p = {}'.format(round(p,4)), fontsize=15)
         data['avg_level'].transpose().plot(kind='line',ax=axs[i,2])
         # delete from memory
         del data
 
-    plt.suptitle('Data visualization for n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
+    #plt.suptitle('Data visualization for n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
     plt.tight_layout()
-    plt.savefig('images/stats_per_gnp_{}_{}_{}.jpeg'.format(thr, lab, n))
+    plt.savefig('images/stats_per_gnp_{}_{}_{}.jpeg'.format(thr, lab, n), bbox_inches='tight')
 
 
 def main():

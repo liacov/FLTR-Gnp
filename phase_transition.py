@@ -10,6 +10,39 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+def plot_p0(prob, directed, n, res, t):
+    # check the directed value
+    if directed:
+        lab = 'dir'
+    else : lab = 'und'
+    # check the t type
+    if t:
+        thr = 'maxpred'
+    else : thr = 'pred'
+
+    fig, axs = plt.subplots(len(res), 1, figsize = (8,12))
+    for i, t in enumerate(res):
+        data = {}
+        for p in prob:
+            # load data
+            temp = pd.read_csv('data/{}/data_{}_{}_{}.csv'.format(thr, lab, n, p), index_col=0)
+            # on each realization check for which nodes the property is realized
+            temp2 = temp[temp.resistance == t].groupby('realization').apply(lambda x: x.max_level < 1)
+            data[p] = (pd.DataFrame(temp2).groupby('realization').sum() > 0).mean()
+            del temp, temp2
+        # plot data
+        axs[i].set_title('Phase transition for t = {}'.format(t), fontsize=15)
+        _ = axs[i].plot(list(data.keys()), list(data.values()), 'o-')
+        _ = axs[i].set_xlim(xmax=0.2)
+
+        # delete from memory
+        del data
+    #plt.suptitle('Phase transition for maxlevel < 1, n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
+    plt.tight_layout()
+    plt.savefig('images/p0_{}_{}_{}.jpeg'.format(thr, lab, n), bbox_inches='tight')
+
+
+
 def plot_p1(prob, directed, n, res, t):
     # check the directed value
     if directed:
@@ -20,55 +53,26 @@ def plot_p1(prob, directed, n, res, t):
         thr = 'maxpred'
     else : thr = 'pred'
 
-    fig, axs = plt.subplots(len(res), 1, figsize = (10,20))
+    fig, axs = plt.subplots(len(res), 1, figsize = (8,12))
     for i, t in enumerate(res):
         data = {}
         for p in prob:
             # load data
-            temp = pd.read_csv('data/{}/data_node_{}_{}_{}.csv'.format(thr, lab, n, p))
-            data[p] = bool(sum(temp[temp.resistance == t].max_level < 1))
-            del temp
-
+            temp = pd.read_csv('data/{}/data_{}_{}_{}.csv'.format(thr, lab, n, p), index_col=0)
+            # on each realization check for which nodes the property is realized
+            temp2 = temp[temp.resistance == t].groupby('realization').apply(lambda x: (x.max_level <= 1) & (x.avg_level < 0))
+            data[p] = (pd.DataFrame(temp2).groupby('realization').sum() > 0).mean()
+            del temp, temp2
         # plot data
         axs[i].set_title('Phase transition for t = {}'.format(t), fontsize=15)
         _ = axs[i].plot(list(data.keys()), list(data.values()), 'o-')
         _ = axs[i].set_xlim(xmax=0.2)
+
         # delete from memory
         del data
-
-    plt.suptitle('Phase transition for maxlevel < 1, n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
+    #plt.suptitle('Phase transition for maxlevel < 1, n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
     plt.tight_layout()
-    plt.savefig('images/p1_{}_{}_{}.jpeg'.format(thr, lab, n))
-
-def plot_p2(prob, directed, n, res, t):
-    # check the directed value
-    if directed:
-        lab = 'dir'
-    else : lab = 'und'
-    # check the t type
-    if t:
-        thr = 'maxpred'
-    else : thr = 'pred'
-
-    fig, axs = plt.subplots(len(res), 1, figsize = (10,20))
-    for i, t in enumerate(res):
-        data = {}
-        for p in prob:
-            # load data
-            temp = pd.read_csv('data/{}/data_node_{}_{}_{}.csv'.format(thr, lab, n, p))
-            data[p] = bool(sum(temp[temp.resistance == t].max_level <= 1)) and bool(sum(temp[temp.resistance == t].avg_level < 0))
-            del temp
-
-        # plot data
-        axs[i].set_title('Phase transition for t = {}'.format(t), fontsize=15)
-        _ = axs[i].plot(list(data.keys()), list(data.values()), 'o-')
-        _ = axs[i].set_xlim(xmax=0.2)
-        # delete from memory
-        del data
-
-    plt.suptitle('Phase transition for maxlevel <= 1 & avglevel < 0, n = {}, {}'.format(n, lab), y=1.01, fontsize=20)
-    plt.tight_layout()
-    plt.savefig('images/p2_{}_{}_{}.jpeg'.format(thr, lab, n))
+    plt.savefig('images/p1_{}_{}_{}.jpeg'.format(thr, lab, n), bbox_inches='tight')
 
 
 def main():
@@ -99,9 +103,9 @@ def main():
     res = np.load('data/res_phase1.npy')
 
     # show data on nodes per resistance value, for each gnp (mean on sample)
-    plot_p1(prob, args.d, args.n, res, args.t)
+    plot_p0(prob, args.d, args.n, res, args.t)
     # show data on graph per resistance values, for each gnp (mean on sample and nodes)
-    plot_p2(prob, args.d, args.n, res, args.t)
+    plot_p1(prob, args.d, args.n, res, args.t)
 
 
 if __name__ == "__main__":
