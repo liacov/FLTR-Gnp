@@ -1,7 +1,7 @@
 import numpy as np
 
 N = [ 10**3, 5*10**3, 10**4 ]
-
+N2 = np.arange(10**3, 10**4 + 10**3, 10**3)
 def main():
 
     for n in N:
@@ -25,6 +25,8 @@ def main():
             f.write(str(list(prob2)))
     # save the explored values of n
     np.save('data/sizes.npy', N)
+    # save the explored values of n
+    np.save('data/sizes_ref.npy', N2)
     # save resistances thresholds
     np.save('data/res_phase1.npy', [ 0.25, 0.5, 0.75, 1 ])  # phase 1 values
 
