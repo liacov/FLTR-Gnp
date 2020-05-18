@@ -57,7 +57,6 @@ def expand_influence(n_job, args):
     mean(exp_level): int, mean expantion level reached during the computation
     '''
 
-
     G, x, t, n, jobs = args
 
     # info
@@ -84,9 +83,15 @@ def expand_influence(n_job, args):
 
 def run_simulation_parallel(params):
 
-    # load probabilities p_i
-    with open('data/keys_ref{}.txt'.format(params.n), 'r') as f:
+    # reading probabilities
+    with open('data/keys{}.txt'.format(args.n), 'r') as f:
+        # original probs
         prob = eval(f.read())
+    with open('data/keys_ref.txt', 'r') as f:
+        # refinement probs
+        prob2 = eval(f.read())
+    prob.extend(prob2)
+    prob.sort(reverse=True)
     # pick the probability of interest
     p = prob[params.p]
     del prob
