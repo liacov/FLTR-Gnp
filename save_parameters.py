@@ -46,6 +46,8 @@ def main():
     # save resistances thresholds
     np.save('data/res_phase1.npy', [ 0.25, 0.5, 0.75, 1 ])  # phase 1 values
     np.save('data/res_phase2.npy', [ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ])  # phase 2 values
+    np.save('data/res_phase3.npy', [ 0.25, 0.35, 0.45, 0.55, 0.65, 0.75])  # phase 3 values
+
 
 
 if __name__ == "__main__":
