@@ -47,6 +47,8 @@ def main():
     np.save('data/res_phase1.npy', [ 0.25, 0.5, 0.75, 1 ])  # phase 1 values
     np.save('data/res_phase2.npy', [ 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 ])  # phase 2 values
     np.save('data/res_phase3.npy', [ 0.25, 0.35, 0.45, 0.55, 0.65, 0.75])  # phase 3 values
+    np.save('data/res_phase4.npy', [ 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675])  # phase 4 values
+
 
 
 

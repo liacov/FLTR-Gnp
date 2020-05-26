@@ -96,7 +96,7 @@ def run_simulation_parallel(params):
     p = prob[params.p]
     del prob
     # load resistance values
-    res = np.load('data/res_phase3.npy')
+    res = np.load('data/res_phase4.npy')
     # check the directed value
     if params.d:
         lab = 'dir'
