@@ -89,9 +89,14 @@ def run_simulation_parallel(params):
     # load probabilities p_i
     with open('data/keys{}.txt'.format(params.n), 'r') as f:
         prob = eval(f.read())
+    # load probabilities p_i
+    with open('data/keys_ref.txt') as f:
+        prob2 = eval(f.read())
+    prob.extend(prob2)
+    prob.sort(reverse=True)
     # pick the probability of interest
     p = prob[params.p]
-    del prob
+    del prob, prob2
     # load resistance values
     res = np.load('data/res_phase1.npy')
     # check the directed value
