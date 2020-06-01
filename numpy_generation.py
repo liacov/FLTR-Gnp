@@ -38,10 +38,10 @@ def main():
     print(args)
 
     # load probabilities p_i
-    with open('data/keys_ref{}.txt'.format(args.n), 'r') as f:
+    with open('data/keys_gc_{}.txt'.format(params.n), 'r') as f:
         prob = eval(f.read())
     # pick the probability of interest
-    p = prob[args.p]
+    p = prob[params.p]
     del prob
 
     # check the directed value

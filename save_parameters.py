@@ -12,17 +12,26 @@ def main():
                 1/(3*n) + (2*np.log(n))/(3*n), 2/(3*n) + np.log(n)/(3*n), # supercritical regime
                 1/(2*n), 1/(10*n) ]                                       # subscritical regime
         prob2 = np.arange(1e-1 - 0.05, 1e-2, -(1e-1 - 1e-2)/20)
+        prob3 = [ (1-k)/n + (k*np.log(n))/n for k in [1/6, 1/2, 5/6] ]
         print('prob', n, prob)
         print()
         print('prob2', n, prob2)
         print()
+        print('prob3', n, prob2)
+        print()
+
         # save probabilities
         with open('data/keys{}.txt'.format(str(n)), 'w') as f:
             #saving keys to file
             f.write(str(list(prob)))
+
         with open('data/keys_ref.txt'.format(str(n)), 'w') as f:
             #saving keys to file
             f.write(str(list(prob2)))
+    
+        with open('data/keys_gc_{}.txt'.format(str(n)), 'w') as f:
+            #saving keys to file
+            f.write(str(list(prob3)))
 
     prob.extend(prob2)
     prob.sort(reverse=True)
