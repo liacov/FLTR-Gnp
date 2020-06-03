@@ -28,7 +28,7 @@ def main():
         with open('data/keys_ref.txt'.format(str(n)), 'w') as f:
             #saving keys to file
             f.write(str(list(prob2)))
-    
+
         with open('data/keys_gc_{}.txt'.format(str(n)), 'w') as f:
             #saving keys to file
             f.write(str(list(prob3)))
@@ -58,7 +58,10 @@ def main():
     np.save('data/res_phase3.npy', [ 0.25, 0.35, 0.45, 0.55, 0.65, 0.75])  # phase 3 values
     np.save('data/res_phase4.npy', [ 0.325, 0.375, 0.425, 0.475, 0.525, 0.575, 0.625, 0.675])  # phase 4 values
 
-
+    # suitable pred resistances for phase 2 (inflection point)
+    np.save('data/res_pred_0.8', [ 0.65, 0.7, 0.8, 0.85, 0.9] )
+    np.save('data/res_pred_0.7', [ 0.45, 0.55, 0.6, 0.65, 0.7] )
+    np.save('data/res_pred_0.6', [ 0.35, 0.4, 0.45, 0.55, 0.6] )
 
 
 if __name__ == "__main__":
